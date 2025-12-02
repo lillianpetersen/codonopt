@@ -1,1 +1,3 @@
-# codon_optimize
+# codonopt
+
+Reverse translate protein sequences and optimize codons
