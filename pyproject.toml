@@ -1,0 +1,23 @@
+[project]
+name = "codonopt"
+version = "0.1.0"
+description = "Codon optimization utilities for E. coli and human expression systems."
+readme = "README.md"
+authors = [
+    { name = "Lillian Kay Petersen" }
+]
+requires-python = ">=3.9"
+
+dependencies = [
+    "dnachisel>=3.2.16",
+    "biopython>=1.86"
+]
+
+[build-system]
+requires = ["setuptools>=67.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["codonopt"]
+
