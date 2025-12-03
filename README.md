@@ -11,6 +11,7 @@ Functionality includes:
 - Reverse translation and codon optimization for E. coli and human
 - For E. coli: avoids Shine-Dalgarno sequences
 - Avoids unwanted sequence motifs (default is BsaI, BsmbI, homopolymers)
+- Avoids strong internal hairpins
 - Constrains stop to defined codon (default is TAG, for GCE applications)
 - GC content windows and global GC constraints
 
@@ -30,16 +31,20 @@ pip install git+https://github.com/lillianpetersen/codonopt.git
 ### Usage
 
 ```
-from codonopt import codonopt_ecoli
-from codonopt import codonopt_human
+from codonopt import codonopt_ecoli, codonopt_human, checks
 
-protein = "MSTNPKPQRKTKRNTNRRPQDVKFPGG"
+protein = "SQPQKGRKPRDLELPLSPSLLGGPGPERTPGSGSGSGLQAPGPALTPSLLPTHTLTPVLLTPSSLPPSIHFWSTLSPIAPRSPAKLSFQFPSSGSAQVHIPSISVDGLSTPVVLSPGPQKP"
 dna = codonopt_ecoli(protein)
 
-protein_GCE = "MSTNPKPQRKTKRNTNRR*PQDVKFPGG"
-dna = codonopt_ecoli(protein, stop_codon='TAG')
+protein_GCE = "SQPQKGRKPRDLELPLSPSLLGGPGPER*PGSGSGSGLQAPGPAL*PSLLPTHTL*PVLLTPSSLPPSIHFWSTLSPIAPR*PAKLSFQFPSSGSAQVHIPSISVDGLS*PVVL*PGPQKP"
+dna = codonopt_ecoli(protein_GCE, stop_codon='TAG')
 
 library['DNA sequence'] = library['Sequence'].apply(codonopt_ecoli)
+
+translation_errors = checks.check_translation(library, dna_col='DNA sequence')
+restriction_hits = checks.check_restriction_sites(library, dna_col='DNA sequence')
+sd_hits = checks.check_functional_sd_sites(library, dna_col='DNA sequence')
+amber_violations = checks.check_amber_stop_codons(library, dna_col='DNA sequence')
 
 etc
 ```

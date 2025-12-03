@@ -10,7 +10,7 @@ RESTRICTION_SITES = ['GGTCTC', 'GAGACC', 'CGTCTC', 'GAGACG']  # BsaI, BsmBI
 SD_PATTERNS = ["AGGAGG", "GGAGG", "AGGGA", "AGGAG", "GGAG", "AGGA", "GAGG"]
 
 
-def check_translation(df, dna_col='DNA sequence in vitro', prot_col='Sequence'):
+def check_translation(df, dna_col='DNA sequence', prot_col='Sequence'):
 	"""Return a DataFrame of rows where the DNA does NOT match the protein."""
 	errors = []
 	for idx, row in df.iterrows():
@@ -27,7 +27,7 @@ def check_translation(df, dna_col='DNA sequence in vitro', prot_col='Sequence'):
 	return pd.DataFrame(errors, columns=['ID','Expected','Translated'])
 
 
-def check_restriction_sites(df, dna_col='DNA sequence in vitro', sites=RESTRICTION_SITES):
+def check_restriction_sites(df, dna_col='DNA sequence', sites=RESTRICTION_SITES):
 	"""Return a DataFrame of rows that contain any restriction site."""
 	hits = []
 	for idx, row in df.iterrows():
@@ -38,7 +38,7 @@ def check_restriction_sites(df, dna_col='DNA sequence in vitro', sites=RESTRICTI
 	return pd.DataFrame(hits, columns=['ID','RestrictionSites'])
 
 
-def check_sd_sites(df, dna_col='DNA sequence in vitro', sd_motifs=SD_PATTERNS):
+def check_sd_sites(df, dna_col='DNA sequence', sd_motifs=SD_PATTERNS):
 	"""Return a DataFrame of rows that contain any canonical SD motif."""
 	hits = []
 	for idx, row in df.iterrows():
@@ -49,7 +49,7 @@ def check_sd_sites(df, dna_col='DNA sequence in vitro', sd_motifs=SD_PATTERNS):
 	return pd.DataFrame(hits, columns=['ID','SDMotifs'])
 
 
-def check_amber_stop_codons(df, dna_col='DNA sequence in vitro', prot_col='Sequence'):
+def check_amber_stop_codons(df, dna_col='DNA sequence', prot_col='Sequence'):
 	"""
 	Check that all '*' (amber stop) in protein sequence correspond to TAG codons in DNA.
 	Returns a DataFrame of any violations.
@@ -73,4 +73,40 @@ def check_amber_stop_codons(df, dna_col='DNA sequence in vitro', prot_col='Seque
 					hits.append((idx, pos, codon))
 
 	return pd.DataFrame(hits, columns=['ID', 'ProteinPos', 'CodonFound'])
+
+
+def check_functional_sd_sites(df, dna_col='DNA sequence', sd_motifs=SD_PATTERNS):
+	"""
+	Return a DataFrame of rows that contain an SD motif 3–15 bp upstream
+	of a valid bacterial start codon (ATG, GTG, TTG).
+	"""
+	
+	# Build regex: SD motif + spacer (3–15 bp) + start codon
+	sd_regex = re.compile(
+		rf"({'|'.join(sd_motifs)}).{{3,13}}({'|'.join(START_CODONS)})",
+		re.IGNORECASE
+	)
+
+	hits = []
+
+	for idx, row in df.iterrows():
+		dna_seq = row[dna_col].upper()
+		
+		for m in sd_regex.finditer(dna_seq):
+			sd_seq = m.group(1)
+			start_codon = m.group(2)
+			sd_pos = m.start(1)
+			start_pos = m.start(2)
+			spacer_len = start_pos - (sd_pos + len(sd_seq))
+
+			hits.append({
+				'ID': idx,
+				'SDMotif': sd_seq,
+				'StartCodon': start_codon,
+				'SD_Position': sd_pos,
+				'Start_Position': start_pos,
+				'Spacer_bp': spacer_len
+			})
+
+	return pd.DataFrame(hits)
 
