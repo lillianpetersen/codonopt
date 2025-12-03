@@ -1,12 +1,13 @@
 from dnachisel import *
 from dnachisel import SequencePattern
+from dnachisel import AvoidHairpins
 from Bio.Seq import Seq
 from .utils import (
 	reverse_translate,
 	get_stop_codon_constraints,
 )
 
-def codonopt_ecoli(protein_seq, stop_codon="TAG", avoid_patterns=None):
+def codonopt_ecoli(protein_seq, stop_codon="TAG", avoid_patterns=None, verbose=False):
 	# starting DNA
 	initial_dna = reverse_translate(protein_seq)
 
@@ -34,12 +35,19 @@ def codonopt_ecoli(protein_seq, stop_codon="TAG", avoid_patterns=None):
 			EnforceGCContent(mini=0.30, maxi=0.65, window=50),
 			EnforceTranslation(translation=protein_seq),
 		],
-		objectives=[CodonOptimize(species='e_coli')],
+		objectives=[
+			CodonOptimize(species='e_coli'),
+			AvoidHairpins(stem_size=8, hairpin_window=200),
+		],
 	) 
 	
 	try:
 		problem.resolve_constraints()
 		problem.optimize()
+
+		if verbose:
+			print(problem.constraints_text_summary())
+			print(problem.objectives_text_summary())
 
 	except NoSolutionError:
 		print('Initial optimization failed. Relaxing AGGA constraint')
@@ -62,16 +70,24 @@ def codonopt_ecoli(protein_seq, stop_codon="TAG", avoid_patterns=None):
 				EnforceGCContent(mini=0.30, maxi=0.65, window=50),
 				EnforceTranslation(translation=protein_seq),
 			],
-			objectives=[CodonOptimize(species='e_coli')],
+		objectives=[
+			CodonOptimize(species='e_coli'),
+			AvoidHairpins(stem_size=8, hairpin_window=200),
+		],
 		) 
 
 		problem.resolve_constraints()
 		problem.optimize()
+
+		if verbose:
+			print(problem.constraints_text_summary())
+			print(problem.objectives_text_summary())
+
 	
 	return problem.sequence
 
 
-def codonopt_human(protein_seq, avoid_patterns=None):
+def codonopt_human(protein_seq, avoid_patterns=None, verbose=False):
 	initial_dna = reverse_translate(protein_seq)
 
 	# Make AvoidPattern() objects
@@ -88,10 +104,18 @@ def codonopt_human(protein_seq, avoid_patterns=None):
 			EnforceGCContent(mini=0.20, maxi=0.75, window=50),
 			EnforceTranslation(translation=protein_seq),
 		],
-		objectives=[CodonOptimize(species='h_sapiens', method='match_codon_usage')],
+		objectives=[
+			CodonOptimize(species='h_sapiens', method='match_codon_usage'),
+			AvoidHairpins(stem_size=8, hairpin_window=200),
+		],
 	) 
 	
 	problem.resolve_constraints()
 	problem.optimize()
+
+	if verbose:
+		print(problem.constraints_text_summary())
+		print(problem.objectives_text_summary())
+
 
 	return problem.sequence

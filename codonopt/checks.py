@@ -1,5 +1,7 @@
 import pandas as pd
 from Bio.Seq import Seq
+import subprocess
+import tempfile
 
 # Restriction sites
 RESTRICTION_SITES = ['GGTCTC', 'GAGACC', 'CGTCTC', 'GAGACG']  # BsaI, BsmBI
@@ -71,5 +73,4 @@ def check_amber_stop_codons(df, dna_col='DNA sequence in vitro', prot_col='Seque
 					hits.append((idx, pos, codon))
 
 	return pd.DataFrame(hits, columns=['ID', 'ProteinPos', 'CodonFound'])
-
 

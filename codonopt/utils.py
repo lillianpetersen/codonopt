@@ -24,3 +24,5 @@ def get_stop_codon_constraints(protein_seq, stop_codon="TAG"):
 				EnforceSequence(sequence=stop_codon, location=(pos, pos + 3))
 			)
 	return constraints
+
+
